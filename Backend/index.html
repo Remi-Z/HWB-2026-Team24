@@ -8,22 +8,110 @@
         body {
             font-family: Arial, sans-serif;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
             height: 100vh;
             background-color: #f4f4f9;
             margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
         }
-        .chat-container {
-            width: 400px;
-            max-width: 100%;
+        .topic-banner {
+            width: 100%;
+            max-width: 900px;
+            background: #28a745;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .main-wrapper {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            max-width: 900px;
+            height: 100%;
+            max-height: 600px;
+        }
+
+        /* Quiz Styles */
+        .quiz-container {
+            flex: 1;
             background: #fff;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            height: 500px;
+        }
+        .quiz-header {
+            background: #17a2b8;
+            color: #fff;
+            padding: 15px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        .quiz-content {
+            flex-grow: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            justify-content: center;
+        }
+        .question-block {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .question-text {
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 1.2rem;
+            text-align: center;
+        }
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .option-submit-btn {
+            background: #fff;
+            border: 2px solid #28a745;
+            color: #28a745;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+        .option-submit-btn:hover {
+            background: #28a745;
+            color: #fff;
+        }
+        .option-submit-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Chat Styles */
+        .chat-container {
+            flex: 1;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
         .chat-header {
             background: #007bff;
@@ -32,6 +120,39 @@
             text-align: center;
             font-size: 1.2rem;
             font-weight: bold;
+        }
+        .game-stats {
+            background: #e9ecef;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.95rem;
+            font-weight: bold;
+            color: #333;
+            border-bottom: 1px solid #ddd;
+        }
+        .progress-area {
+            padding: 10px 15px;
+            background: #f8f9fa;
+        }
+        .progress-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+        }
+        .progress-bar {
+            width: 0%; /* Start at 0% */
+            height: 18px;
+            background-color: #28a745;
+            border-radius: 5px;
+            transition: width 0.5s ease-in-out;
+        }
+        .progress-label {
+            text-align: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-top: 5px;
         }
         .chat-messages {
             flex-grow: 1;
@@ -85,25 +206,191 @@
 </head>
 <body>
 
-<div class="chat-container">
-    <div class="chat-header">ChatGPT Assistant</div>
-    <div class="chat-messages" id="chat-messages">
-        <!-- Messages will appear here -->
+<div class="topic-banner" id="topic-banner">Loading Topic...</div>
+
+<div class="main-wrapper">
+    <!-- Quiz Section -->
+    <div class="quiz-container">
+        <div class="quiz-header" id="quiz-header">Quiz for Level 1</div>
+        <div class="quiz-content" id="quiz-content">
+            <p style="text-align: center;">Loading quiz...</p>
+        </div>
     </div>
-    <div class="chat-input">
-        <input type="text" id="message-input" placeholder="Type your message..." onkeypress="handleKeyPress(event)">
-        <button onclick="sendMessage()">Send</button>
+
+    <!-- Chat Section -->
+    <div class="chat-container">
+        <div class="chat-header">
+            <span>ChatGPT Assistant</span>
+        </div>
+        <div class="game-stats">
+            <span id="current-points-display">Points: 0</span>
+            <span id="goal-display">Goal: --</span>
+        </div>
+        <div class="progress-area">
+            <div class="progress-container">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+            <div id="progress-label" class="progress-label">Loading level...</div>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <!-- Messages will appear here -->
+        </div>
+        <div class="chat-input">
+            <input type="text" id="message-input" placeholder="Type your message..." onkeypress="handleKeyPress(event)">
+            <button onclick="sendMessage()">Send</button>
+        </div>
     </div>
 </div>
 
 <script>
     const messagesContainer = document.getElementById('chat-messages');
     const inputField = document.getElementById('message-input');
+    let currentLevel = 1;
+    let currentPoints = 0;
+    let goalPoints = 100;
+    let currentQuiz = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        updateGameState();
+    });
+
+    async function updateGameState() {
+        try {
+            const response = await fetch('/level');
+            if (!response.ok) throw new Error('Failed to fetch stats');
+
+            const data = await response.json();
+            const previousLevel = currentLevel;
+
+            // Update state
+            currentLevel = data.level || 1;
+            currentPoints = data.points || 0;
+            goalPoints = data.goal || 100;
+
+            // Update UI
+            document.getElementById('current-points-display').innerText = `Points: ${currentPoints}`;
+            document.getElementById('goal-display').innerText = `Top: ${goalPoints}`;
+
+            const maxLevel = 3;
+            const percentage = ((currentLevel - 1) / (maxLevel - 1)) * 100;
+            document.getElementById('progress-bar').style.width = percentage + '%';
+            document.getElementById('progress-label').innerText = `Level ${currentLevel}`;
+            document.getElementById('quiz-header').innerText = `Quiz for Level ${currentLevel}`;
+
+            // If the level has changed, load the new quiz
+            if (previousLevel !== currentLevel || !currentQuiz) {
+                await loadQuizForLevel(currentLevel);
+            }
+
+        } catch (error) {
+            console.error('Error fetching game state:', error);
+            document.getElementById('progress-label').innerText = 'Could not load stats';
+            document.getElementById('current-points-display').innerText = 'Points: --';
+            document.getElementById('goal-display').innerText = 'Goal: --';
+            // Load fallback quiz if server fails
+            await loadQuizForLevel(currentLevel);
+        }
+    }
+
+    async function loadQuizForLevel(level) {
+        const quizContent = document.getElementById('quiz-content');
+        const topicBanner = document.getElementById('topic-banner');
+        quizContent.innerHTML = '<p style="text-align: center;">Loading quiz...</p>';
+        topicBanner.innerText = 'Loading Topic...';
+
+        try {
+            const response = await fetch(`/api/quiz/level${level}`);
+            if (response.ok) {
+                // Expecting a single object instead of an array
+                const data = await response.json();
+                // Handle cases where the backend returns an array of length 1 or a direct object
+                currentQuiz = Array.isArray(data) ? data[0] : data;
+            } else {
+                throw new Error(`Failed to fetch quiz for level ${level}`);
+            }
+        } catch (error) {
+            console.warn(error.message, 'Using fallback JSON.');
+            const fallbackQuizzes = {
+                1: {"id": 1, "topic": "Basic Math", "question": "What is 1 + 1?", "options": ["1", "2", "3", "4"]},
+                2: {"id": 2, "topic": "Geography", "question": "What is the capital of Japan?", "options": ["Seoul", "Beijing", "Tokyo", "Bangkok"]},
+                3: {"id": 3, "topic": "Literature", "question": "Who wrote 'Hamlet'?", "options": ["Dickens", "Shakespeare", "Tolkien", "Orwell"]}
+            };
+            currentQuiz = fallbackQuizzes[level] || null;
+        }
+
+        renderQuiz();
+    }
+
+    function renderQuiz() {
+        const quizContent = document.getElementById('quiz-content');
+        const topicBanner = document.getElementById('topic-banner');
+        quizContent.innerHTML = ''; // Clear loading message
+
+        if (!currentQuiz) {
+            quizContent.innerHTML = '<p style="text-align: center;">No quiz available for this level.</p>';
+            topicBanner.innerText = 'No Topic Available';
+            return;
+        }
+
+        // Update the topic banner
+        topicBanner.innerText = `Topic: ${currentQuiz.topic || 'General Knowledge'}`;
+
+        const questionBlock = document.createElement('div');
+        questionBlock.classList.add('question-block');
+
+        const questionText = document.createElement('div');
+        questionText.classList.add('question-text');
+        questionText.innerText = currentQuiz.question;
+        questionBlock.appendChild(questionText);
+
+        const optionsGrid = document.createElement('div');
+        optionsGrid.classList.add('options-grid');
+
+        currentQuiz.options.forEach(option => {
+            const btn = document.createElement('button');
+            btn.classList.add('option-submit-btn');
+            btn.innerText = option;
+            // Clicking the button immediately submits that answer
+            btn.onclick = () => submitAnswerDirectly(option);
+            optionsGrid.appendChild(btn);
+        });
+
+        questionBlock.appendChild(optionsGrid);
+        quizContent.appendChild(questionBlock);
+    }
+
+    async function submitAnswerDirectly(answer) {
+        if (!currentQuiz) return;
+
+        try {
+            const response = await fetch(`/api/submit-quiz/level${currentLevel}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ answer: answer, questionId: currentQuiz.id })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                alert(data.message || `Answer submitted! Your score: ${data.score || 0}`);
+                // If submission is successful, refresh the state from the server.
+                await updateGameState();
+            } else {
+                const errorData = await response.json();
+                alert(`Error: ${errorData.error || 'Failed to submit answer.'}`);
+            }
+        } catch (error) {
+            alert(`Could not connect to server. (Fallback mode) You chose: ${answer}`);
+            console.log("Fallback submission for:", { questionId: currentQuiz.id, answer: answer });
+            // Simulate progression in fallback mode for demonstration
+            currentLevel = Math.min(currentLevel + 1, 3);
+            await loadQuizForLevel(currentLevel);
+        }
+    }
 
     function appendMessage(sender, text) {
         const messageDiv = document.createElement('div');
         messageDiv.classList.add('message');
-        messageDiv.classList.add(sender); // 'user' or 'bot'
+        messageDiv.classList.add(sender);
         messageDiv.innerText = text;
         messagesContainer.appendChild(messageDiv);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -117,7 +404,8 @@
         inputField.value = '';
 
         try {
-            const response = await fetch('/api/chat', {
+            const endpoint = `/api/chat/level${currentLevel}`;
+            const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -128,6 +416,7 @@
 
             if (response.ok) {
                 appendMessage('bot', data.response);
+                await updateGameState(); // Also update state after chat
             } else {
                 appendMessage('bot', 'Error: ' + (data.error || 'Something went wrong.'));
             }
